@@ -1,0 +1,252 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Beni Affet</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fce4ec;
+      text-align: center;
+      padding: 50px;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 {
+      font-size: 2em;
+      color: #880e4f;
+      margin-bottom: 10px;
+    }
+    #heart-animation, #final-animation, #initial-image {
+      display: none;
+      margin: 10px auto;
+    }
+    #heart-animation {
+      width: 100px;
+      height: 100px;
+    }
+    #initial-image {
+      width: 100px;
+      height: 100px;
+    }
+    #final-animation {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 200px;
+      height: 200px;
+      transform: translate(-50%, -50%);
+      z-index: 10000;
+    }
+    #question {
+      margin: 40px 0;
+      font-size: 1.5em;
+    }
+    .option {
+      padding: 15px 30px;
+      font-size: 1em;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 150px;
+    }
+    #yes {
+      background-color: #43a047;
+      color: white;
+      font-size: 1em;
+    }
+    #no {
+      background-color: #e53935;
+      color: white;
+    }
+    #final-message {
+      display: none;
+      margin-top: 50px;
+      font-size: 2em;
+      color: #4caf50;
+    }
+    /* Son sorudaki evet butonu tam ekran */
+    .fullscreen-yes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      font-size: 3em !important;
+      border-radius: 0 !important;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    /* Heart animation styles */
+    .heart {
+      fill: none;
+      stroke: #ff4081;
+      stroke-width: 4;
+      transform-origin: center;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    /* Confetti animation styles */
+    .confetti {
+      fill: none;
+      stroke-width: 2;
+      transform-origin: center;
+    }
+    .confetti-1 { stroke: #ff4081; animation: confettiFall 2s infinite linear; }
+    .confetti-2 { stroke: #4caf50; animation: confettiFall 2.5s infinite linear 0.5s; }
+    .confetti-3 { stroke: #2196f3; animation: confettiFall 2s infinite linear 1s; }
+    @keyframes confettiFall {
+      0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100px) rotate(360deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <h1 id="title">Beni Affet</h1>
+
+  <!-- İlk soruda görünen küçük kalp animasyonu -->
+  <svg id="heart-animation" viewBox="0 0 100 100">
+    <path class="heart" d="M50 30 C30 10, 10 30, 20 50 C30 70, 50 90, 50 90 C50 90, 70 70, 80 50 C90 30, 70 10, 50 30 Z"/>
+  </svg>
+
+  <!-- İlk soruda görünen ek görüntü -->
+  <img id="initial-image" src="https://malibu.sfo3.cdn.digitaloceanspaces.com/20220321_128/file_8590064_128x128.webp" alt="Ek kalp görüntüsü" />
+
+  <div id="question">Beni affeder misin?</div>
+  <button id="yes" class="option">Evet, affettim</button>
+  <button id="no" class="option">Hayır, henüz değil</button>
+
+  <!-- Evet seçildiğinde büyük ekran animasyonu -->
+  <svg id="final-animation" viewBox="0 0 200 200">
+    <circle class="confetti confetti-1" cx="50" cy="50" r="5"/>
+    <circle class="confetti confetti-2" cx="100" cy="50" r="5"/>
+    <circle class="confetti confetti-3" cx="150" cy="50" r="5"/>
+  </svg>
+
+  <div id="final-message">Teşekkür ederim! ❤️</div>
+
+  <script>
+    const questions = [
+      { text: "Beni affeder misin?", noText: "Hayır, henüz değil" },
+      { text: "Sinirin geçmedi mi hala?", noText: "Hayır, daha zaman lazım" },
+      { text: "Yeniden güvenebilir misin bana?", noText: "Hayır, zor görünüyor" },
+      { text: "Bir şans daha vermek ister misin?", noText: "Hayır, bu son soru" },
+      { text: "Hatalarımı telafi edebilir miyim?", noText: "Hayır, kolay değil" },
+      { text: "Sana yeterince değer verdim mi?", noText: "Hayır, hala eksik" },
+      { text: "Gerçekten beni affettin mi?", noText: "Hayır, emin değilim" },
+      { text: "Birlikte yeni anılar yaratabilir miyiz?", noText: "Hayır, henüz hazır değilim" },
+      { text: "Sözlerime yeniden inanır mısın?", noText: "Hayır, güven kazanılmalı" },
+      { text: "Seni mutlu etmek için çaba gösterebilir miyim?", noText: "Hayır, önce kendimi bulmalıyım" },
+      { text: "Geçmişi geride bırakabilir miyiz?", noText: "Hayır, bu o kadar basit değil" },
+      { text: "Sana sevgimi kanıtlayabilir miyim?", noText: "Hayır, biraz daha zaman lazım" }
+    ];
+
+    let currentQuestionIndex = 0;
+    const yesBtn = document.getElementById("yes");
+    const noBtn = document.getElementById("no");
+    const finalMessage = document.getElementById("final-message");
+    const question = document.getElementById("question");
+    const heartAnimation = document.getElementById("heart-animation");
+    const initialImage = document.getElementById("initial-image");
+    const finalAnimation = document.getElementById("final-animation");
+    const title = document.getElementById("title");
+
+    // İlk soruda kalp animasyonu ve ek görüntüyü göster
+    function showInitialAnimations(show) {
+      heartAnimation.style.display = show ? "block" : "none";
+      initialImage.style.display = show ? "block" : "none";
+    }
+
+    function updateQuestion() {
+      if (currentQuestionIndex < questions.length) {
+        question.textContent = questions[currentQuestionIndex].text;
+        noBtn.textContent = questions[currentQuestionIndex].noText;
+
+        // İlk soruda kalp ve ek görüntüyü göster, diğer sorularda gizle
+        showInitialAnimations(currentQuestionIndex === 0);
+
+        // Son sorudaysa evet butonu tam ekran yap
+        if (currentQuestionIndex === questions.length - 1) {
+          yesBtn.classList.add("fullscreen-yes");
+          noBtn.style.display = "inline-block";
+        } else {
+          yesBtn.classList.remove("fullscreen-yes");
+          noBtn.style.display = "inline-block";
+        }
+      } else {
+        question.style.display = "none";
+        yesBtn.style.display = "none";
+        noBtn.style.display = "none";
+        showInitialAnimations(false);
+      }
+    }
+
+    noBtn.addEventListener("click", () => {
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex >= questions.length) {
+        noBtn.style.display = "none";
+      }
+
+      updateQuestion();
+    });
+
+    yesBtn.addEventListener("click", () => {
+      question.style.display = "none";
+      yesBtn.style.display = "none";
+      noBtn.style.display = "none";
+      showInitialAnimations(false);
+
+      // Başlığı güncelle
