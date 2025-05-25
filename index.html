@@ -124,7 +124,7 @@
   </svg>
 
   <!-- İlk soruda görünen ek görüntü -->
-  <img id="initial-image" src="file_8590064_128x128.webp" alt="Ek kalp görüntüsü" />
+  <img id="initial-image" src="heart.webp" alt="Ek kalp görüntüsü" />
 
   <div id="question">Beni affeder misin?</div>
   <button id="yes" class="option">Evet, affettim</button>
@@ -141,7 +141,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      console.log("JavaScript yüklendi ve DOM hazır!"); // Hata ayıklama için
+      console.log("JavaScript yüklendi ve DOM hazır!");
       const questions = [
         { text: "Beni affeder misin?", noText: "Hayır, henüz değil" },
         { text: "Sinirin hala geçmedi mi?", noText: "Hayır, daha zaman lazım" },
@@ -182,11 +182,13 @@
           question.textContent = questions[currentQuestionIndex].text;
           noBtn.textContent = questions[currentQuestionIndex].noText;
           showInitialAnimations(currentQuestionIndex === 0);
-          if (currentQuestionIndex === questions.length - 1) {
-            yesBtn.classList.add("fullscreen-yes");
-            noBtn.style.display = "inline-block";
+
+          // Evet butonunu her sorudan sonra biraz büyüt
+          if (currentQuestionIndex < questions.length - 1) { // Son soru hariç
+            const scaleFactor = 1 + (currentQuestionIndex * 0.1); // Her adımda %10 büyüme
+            yesBtn.style.transform = `scale(${scaleFactor})`;
           } else {
-            yesBtn.classList.remove("fullscreen-yes");
+            yesBtn.classList.add("fullscreen-yes");
             noBtn.style.display = "inline-block";
           }
         } else {
@@ -198,7 +200,7 @@
       }
 
       yesBtn.addEventListener("click", () => {
-        console.log("Evet butonuna tıklandı!"); // Hata ayıklama için
+        console.log("Evet butonuna tıklandı!");
         question.style.display = "none";
         yesBtn.style.display = "none";
         noBtn.style.display = "none";
@@ -209,7 +211,7 @@
       });
 
       noBtn.addEventListener("click", () => {
-        console.log("Hayır butonuna tıklandı!"); // Hata ayıklama için
+        console.log("Hayır butonuna tıklandı!");
         currentQuestionIndex++;
         if (currentQuestionIndex >= questions.length) {
           noBtn.style.display = "none";
