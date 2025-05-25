@@ -1,46 +1,8 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Beni Affet</title>
   <style>
     body {
@@ -162,7 +124,7 @@
   </svg>
 
   <!-- İlk soruda görünen ek görüntü -->
-  <img id="initial-image" src="https://malibu.sfo3.cdn.digitaloceanspaces.com/20220321_128/file_8590064_128x128.webp" alt="Ek kalp görüntüsü" />
+  <img id="initial-image" src="heart.webp" alt="Ek kalp görüntüsü" />
 
   <div id="question">Beni affeder misin?</div>
   <button id="yes" class="option">Evet, affettim</button>
@@ -178,75 +140,85 @@
   <div id="final-message">Teşekkür ederim! ❤️</div>
 
   <script>
-    const questions = [
-      { text: "Beni affeder misin?", noText: "Hayır, henüz değil" },
-      { text: "Sinirin geçmedi mi hala?", noText: "Hayır, daha zaman lazım" },
-      { text: "Yeniden güvenebilir misin bana?", noText: "Hayır, zor görünüyor" },
-      { text: "Bir şans daha vermek ister misin?", noText: "Hayır, bu son soru" },
-      { text: "Hatalarımı telafi edebilir miyim?", noText: "Hayır, kolay değil" },
-      { text: "Sana yeterince değer verdim mi?", noText: "Hayır, hala eksik" },
-      { text: "Gerçekten beni affettin mi?", noText: "Hayır, emin değilim" },
-      { text: "Birlikte yeni anılar yaratabilir miyiz?", noText: "Hayır, henüz hazır değilim" },
-      { text: "Sözlerime yeniden inanır mısın?", noText: "Hayır, güven kazanılmalı" },
-      { text: "Seni mutlu etmek için çaba gösterebilir miyim?", noText: "Hayır, önce kendimi bulmalıyım" },
-      { text: "Geçmişi geride bırakabilir miyiz?", noText: "Hayır, bu o kadar basit değil" },
-      { text: "Sana sevgimi kanıtlayabilir miyim?", noText: "Hayır, biraz daha zaman lazım" }
-    ];
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("JavaScript yüklendi ve DOM hazır!"); // Hata ayıklama için
+      const questions = [
+        { text: "Beni affeder misin?", noText: "Hayır, henüz değil" },
+        { text: "Sinirin hala geçmedi mi?", noText: "Hayır, daha zaman lazım" },
+        { text: "Yeniden güvenebilir misin bana?", noText: "Hayır, zor görünüyor" },
+        { text: "Bir şans daha vermek ister misin?", noText: "Hayır, bu son soru" },
+        { text: "Hatalarımı telafi edebilir miyim?", noText: "Hayır, kolay değil" },
+        { text: "Sana yeterince değer verdim mi?", noText: "Hayır, hala eksik" },
+        { text: "Gerçekten beni affettin mi?", noText: "Hayır, emin değilim" },
+        { text: "Birlikte yeni anılar yaratabilir miyiz?", noText: "Hayır, henüz hazır değilim" },
+        { text: "Sözlerime yeniden inanır mısın?", noText: "Hayır, güven kazanılmalı" },
+        { text: "Seni mutlu etmek için çaba gösterebilir miyim?", noText: "Hayır, önce kendimi bulmalıyım" },
+        { text: "Geçmişi geride bırakabilir miyiz?", noText: "Hayır, bu o kadar basit değil" },
+        { text: "Sana sevgimi kanıtlayabilir miyim?", noText: "Hayır, biraz daha zaman lazım" }
+      ];
 
-    let currentQuestionIndex = 0;
-    const yesBtn = document.getElementById("yes");
-    const noBtn = document.getElementById("no");
-    const finalMessage = document.getElementById("final-message");
-    const question = document.getElementById("question");
-    const heartAnimation = document.getElementById("heart-animation");
-    const initialImage = document.getElementById("initial-image");
-    const finalAnimation = document.getElementById("final-animation");
-    const title = document.getElementById("title");
+      let currentQuestionIndex = 0;
+      const yesBtn = document.getElementById("yes");
+      const noBtn = document.getElementById("no");
+      const finalMessage = document.getElementById("final-message");
+      const question = document.getElementById("question");
+      const heartAnimation = document.getElementById("heart-animation");
+      const initialImage = document.getElementById("initial-image");
+      const finalAnimation = document.getElementById("final-animation");
+      const title = document.getElementById("title");
 
-    // İlk soruda kalp animasyonu ve ek görüntüyü göster
-    function showInitialAnimations(show) {
-      heartAnimation.style.display = show ? "block" : "none";
-      initialImage.style.display = show ? "block" : "none";
-    }
+      if (!yesBtn || !noBtn) {
+        console.error("Butonlar bulunamadı! yesBtn:", yesBtn, "noBtn:", noBtn);
+        return;
+      }
 
-    function updateQuestion() {
-      if (currentQuestionIndex < questions.length) {
-        question.textContent = questions[currentQuestionIndex].text;
-        noBtn.textContent = questions[currentQuestionIndex].noText;
+      function showInitialAnimations(show) {
+        heartAnimation.style.display = show ? "block" : "none";
+        initialImage.style.display = show ? "block" : "none";
+      }
 
-        // İlk soruda kalp ve ek görüntüyü göster, diğer sorularda gizle
-        showInitialAnimations(currentQuestionIndex === 0);
-
-        // Son sorudaysa evet butonu tam ekran yap
-        if (currentQuestionIndex === questions.length - 1) {
-          yesBtn.classList.add("fullscreen-yes");
-          noBtn.style.display = "inline-block";
+      function updateQuestion() {
+        if (currentQuestionIndex < questions.length) {
+          question.textContent = questions[currentQuestionIndex].text;
+          noBtn.textContent = questions[currentQuestionIndex].noText;
+          showInitialAnimations(currentQuestionIndex === 0);
+          if (currentQuestionIndex === questions.length - 1) {
+            yesBtn.classList.add("fullscreen-yes");
+            noBtn.style.display = "inline-block";
+          } else {
+            yesBtn.classList.remove("fullscreen-yes");
+            noBtn.style.display = "inline-block";
+          }
         } else {
-          yesBtn.classList.remove("fullscreen-yes");
-          noBtn.style.display = "inline-block";
+          question.style.display = "none";
+          yesBtn.style.display = "none";
+          noBtn.style.display = "none";
+          showInitialAnimations(false);
         }
-      } else {
+      }
+
+      yesBtn.addEventListener("click", () => {
+        console.log("Evet butonuna tıklandı!"); // Hata ayıklama için
         question.style.display = "none";
         yesBtn.style.display = "none";
         noBtn.style.display = "none";
         showInitialAnimations(false);
-      }
-    }
+        title.textContent = "Affettiğin için teşekkür ederim 😊❤️";
+        finalAnimation.style.display = "block";
+        finalMessage.style.display = "block";
+      });
 
-    noBtn.addEventListener("click", () => {
-      currentQuestionIndex++;
-
-      if (currentQuestionIndex >= questions.length) {
-        noBtn.style.display = "none";
-      }
+      noBtn.addEventListener("click", () => {
+        console.log("Hayır butonuna tıklandı!"); // Hata ayıklama için
+        currentQuestionIndex++;
+        if (currentQuestionIndex >= questions.length) {
+          noBtn.style.display = "none";
+        }
+        updateQuestion();
+      });
 
       updateQuestion();
     });
-
-    yesBtn.addEventListener("click", () => {
-      question.style.display = "none";
-      yesBtn.style.display = "none";
-      noBtn.style.display = "none";
-      showInitialAnimations(false);
-
-      // Başlığı güncelle
+  </script>
+</body>
+</html>
